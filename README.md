@@ -5,7 +5,7 @@
 2. Launch EC2 instance
 3. SSH into your machine:
 ```
-chmod 400 key.pem
+chmod 400 your-key.pem
 ```
 ```
 ssh -i your-key.pem ubuntu@your-ec2-ip
