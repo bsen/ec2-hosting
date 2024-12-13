@@ -1,112 +1,73 @@
-# EC2 Node.js Deployment
+# EC2 Node.js Deployment Guide
 
-This guide provides step-by-step instructions for deploying a Node.js application to Amazon EC2 using PM2, NGINX as a reverse proxy, and SSL from Let's Encrypt.
+## 1. AWS Setup
+- Create AWS account
+- Launch EC2 instance
+- SSH into machine
 
-## 1. Create Free AWS Account
-
-Create a free AWS Account at [https://aws.amazon.com/](https://aws.amazon.com/)
-
-## 2. Create and Launch an EC2 Instance
-
-For this demo, we'll be creating a t2.medium Ubuntu machine. After launching the instance, SSH into the machine.
-
-## 3. Install Node.js and NPM
-
-Run the following commands to install Node.js and NPM:
-
+## 2. Node.js Setup
 ```bash
-curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install nodejs
-node --version
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+
+. ~/.nvm/nvm.sh
+
+nvm install 23
 ```
 
-## 4. Clone Your Project from GitHub
-
-Clone your project repository:
-
+## 3. Project Setup
 ```bash
-git clone https://github.com/piyushgargdev-01/short-url-nodejs
-```
+git clone https://github.com/your-username/your-repository
 
-## 5. Install Dependencies and Test the App
+cd your-repository
 
-Install PM2 globally and start your application:
+npm install
 
-```bash
 sudo npm i pm2 -g
-pm2 start index
+
+pm2 start index.js
 ```
 
-Other useful PM2 commands:
-
+## 4. NGINX Setup
 ```bash
-pm2 show app
-pm2 status
-pm2 restart app
-pm2 stop app
-pm2 logs         # Show log stream
-pm2 flush        # Clear logs
+sudo apt update
 
-# To ensure the app starts on reboot
-pm2 startup ubuntu
-```
-
-## 6. Install and Configure NGINX
-
-Install NGINX:
-
-```bash
 sudo apt install nginx
-```
 
-Configure NGINX:
-
-```bash
 sudo nano /etc/nginx/sites-available/default
 ```
 
-Add the following to the location part of the server block:
-
+Add to server block:
 ```nginx
-server_name yourdomain.com www.yourdomain.com;
-location / {
-    proxy_pass http://localhost:8001; #whatever port your app runs on
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
+server {
+    server_name yourdomain.com www.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
 }
 ```
 
-Check the NGINX configuration and restart:
-
+Then verify and restart NGINX:
 ```bash
 sudo nginx -t
+
+sudo systemctl restart nginx
+
 sudo nginx -s reload
 ```
 
-## 7. Add SSL with Let's Encrypt
-
-Install Certbot and obtain SSL certificates:
-
+## 5. SSL Setup
 ```bash
-sudo add-apt-repository ppa:certbot/certbot
 sudo apt-get update
+
 sudo apt-get install python3-certbot-nginx
+
 sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+
+sudo certbot renew --dry-run
 ```
-
-Test the renewal process:
-
-```bash
-certbot renew --dry-run
-```
-
-* SSL certificates are valid for 90 days. Make sure to set up automatic renewal.
-
----
-
-With these steps, you should have successfully deployed your Node.js application to Amazon EC2 with NGINX as a reverse proxy and SSL from Let's Encrypt.
-
-Credits - https://github.com/piyushgarg-dev
